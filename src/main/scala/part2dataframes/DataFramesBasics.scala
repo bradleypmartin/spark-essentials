@@ -8,10 +8,10 @@ object DataFramesBasics extends App {
   // creating a SparkSession
   val spark = SparkSession.builder()
     .appName("DataFrames Basics")
-    .config("spark.master", "local")
-    .getOrCreate()
+    .config("spark.master", "local")     // can add many of these; 1-1 with config settings
+    .getOrCreate()                       // right now running this locally (Docker)
 
-  // reading a DF
+  // reading a DF (from a JSON file; schema automatically sensed from keys)
   val firstDF = spark.read
     .format("json")
     .option("inferSchema", "true")
@@ -19,15 +19,15 @@ object DataFramesBasics extends App {
 
   // showing a DF
   firstDF.show()
-  firstDF.printSchema()
+  firstDF.printSchema() // shows hierarchical keys/cols AND types
 
-  // get rows
+  // get rows (doesn't show up in tabular format like above)
   firstDF.take(10).foreach(println)
 
-  // spark types
+  // spark types (interesting; this is a special case object, as are analogous *Types)
   val longType = LongType
 
-  // schema
+  // schema (defining ourselves; note the Types given here)
   val carsSchema = StructType(Array(
     StructField("Name", StringType),
     StructField("Miles_per_Gallon", DoubleType),
@@ -44,15 +44,17 @@ object DataFramesBasics extends App {
   val carsDFSchema = firstDF.schema
 
   // read a DF with your schema
+  // NOTE: best practice is to impose your OWN schemas
   val carsDFWithSchema = spark.read
     .format("json")
     .schema(carsDFSchema)
     .load("src/main/resources/data/cars.json")
 
-  // create rows by hand
+  // create rows by hand (pretty rare in prod, but good for testing)
   val myRow = Row("chevrolet chevelle malibu",18,8,307,130,3504,12.0,"1970-01-01","USA")
 
-  // create DF from tuples
+  // create DF from tuples (another situation where Spark will infer schema types,
+  //                        but NOT column titles, which aren't present)
   val cars = Seq(
     ("chevrolet chevelle malibu",18,8,307,130,3504,12.0,"1970-01-01","USA"),
     ("buick skylark 320",15,8,350,165,3693,11.5,"1970-01-01","USA"),
@@ -86,6 +88,40 @@ object DataFramesBasics extends App {
     *   - print its schema
     *   - count the number of rows, call count()
     */
+
+  // 1 (Brad)
+
+  // schema (defining ourselves; note the Types given here)
+  val bradPhoneSchema = StructType(Array(
+    StructField("Make", StringType),
+    StructField("Model", StringType),
+    StructField("Platform", StringType),
+    StructField("Megapixels", LongType)
+  ))
+
+  val bradPhones = Seq(
+    ("Samsung", "Galaxy S10", "Android", 12),
+    ("Apple", "iPhone X", "iOS", 13)
+  )
+
+  val bradPhonesDF = bradPhones.toDF("Make", "Model", "Platform", "Megapixels")
+  bradPhonesDF.show()
+
+  // 2 (Brad)
+
+  val bradMoviesDF = spark.read
+    .format("json")
+    .option("inferSchema", "true")
+    .load("src/main/resources/data/movies.json")
+
+  bradMoviesDF.printSchema()
+  println(s"Brad's movies list has: ${bradMoviesDF.count()} rows.")
+
+
+
+
+
+  // Daniel's (instructor's) solutions
 
   // 1
   val smartphones = Seq(
